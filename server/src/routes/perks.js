@@ -10,5 +10,7 @@ router.post('/', createPerk);
 // put vs patch: put is for full updates, patch is for partial updates. they will both work,However it is just a convention.
 router.patch('/:id', updatePerk);
 router.delete('/:id', deletePerk);
+router.get('/all', getAllPerks);
+
 
 export default router;

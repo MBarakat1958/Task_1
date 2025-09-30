@@ -46,12 +46,12 @@ export async function getPerk(req, res, next) {
 }
 
 // get all perks
-export async function getAllPerks(req, res, next) {
-  try {
-    const perks = await Perk.find().sort({ createdAt: -1 });
-    res.json(perks);
-  } catch (err) { next(err); }
-}
+  export async function getAllPerks(req, res, next) {
+    try {
+      const perks = await Perk.find().sort({ createdAt: -1 });
+      res.json(perks);
+    } catch (err) { next(err); }
+  }
 
 // Create a new perk
 export async function createPerk(req, res, next) {
@@ -69,9 +69,9 @@ export async function createPerk(req, res, next) {
 }
 // TODO
 // Update an existing perk by ID and validate only the fields that are being updated 
-export async function updatePerk(req, res, next) {
+// export async function updatePerk(req, res, next) {
   
-}
+// }
 
 
 // Delete a perk by ID
@@ -81,4 +81,35 @@ export async function deletePerk(req, res, next) {
     if (!doc) return res.status(404).json({ message: 'Perk not found' });
     res.json({ ok: true });
   } catch (err) { next(err); }
+}
+
+// Update an existing perk by ID and validate only the fields that are being updated 
+export async function updatePerk(req, res, next) {
+  try {
+    // Validate request body against schema, but make all fields optional for updates
+    const updateSchema = Joi.object({
+      title: Joi.string().min(2),
+      description: Joi.string().allow(''),
+      category: Joi.string().valid('food','tech','travel','fitness','other'),
+      discountPercent: Joi.number().min(0).max(100),
+      merchant: Joi.string().allow('')
+    });
+
+    const { value, error } = updateSchema.validate(req.body);
+    if (error) return res.status(400).json({ message: error.message });
+
+    // Find and update the perk
+    const doc = await Perk.findByIdAndUpdate(
+      req.params.id,
+      { ...value },
+      { new: true, runValidators: true }
+    );
+
+    if (!doc) return res.status(404).json({ message: 'Perk not found' });
+    
+    res.json({ perk: doc });
+  } catch (err) {
+    if (err.code === 11000) return res.status(409).json({ message: 'Duplicate perk for this merchant' });
+    next(err);
+  }
 }
